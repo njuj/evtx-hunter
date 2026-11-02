@@ -1,0 +1,1286 @@
+{
+  "rules": [
+    {
+      "id": "security-log-cleared",
+      "title": "Security event log cleared",
+      "level": "high",
+      "mitre": [
+        "T1070.001"
+      ],
+      "description": "Wiping the Security log is a classic cover-your-tracks step.",
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        1102
+      ],
+      "show": [
+        "SubjectUserName",
+        "SubjectDomainName"
+      ]
+    },
+    {
+      "id": "system-log-cleared",
+      "title": "Event log cleared",
+      "level": "high",
+      "mitre": [
+        "T1070.001"
+      ],
+      "channels": [
+        "System"
+      ],
+      "event_ids": [
+        104
+      ],
+      "where": [
+        [
+          "provider",
+          [
+            "Microsoft-Windows-Eventlog"
+          ]
+        ]
+      ],
+      "show": [
+        "SubjectUserName",
+        "Channel",
+        "BackupPath"
+      ]
+    },
+    {
+      "id": "user-account-created",
+      "title": "Local or domain user account created",
+      "level": "medium",
+      "mitre": [
+        "T1136.001"
+      ],
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4720
+      ],
+      "show": [
+        "TargetUserName",
+        "TargetDomainName",
+        "SubjectUserName"
+      ]
+    },
+    {
+      "id": "added-to-privileged-group",
+      "title": "Account added to a privileged group",
+      "level": "high",
+      "mitre": [
+        "T1098"
+      ],
+      "description": "Administrators, Domain/Enterprise/Schema Admins, Account/Server/Backup Operators.",
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4728,
+        4732,
+        4756
+      ],
+      "where": [
+        [
+          "TargetSid|endswith",
+          [
+            "-544",
+            "-548",
+            "-549",
+            "-551",
+            "-512",
+            "-518",
+            "-519"
+          ]
+        ]
+      ],
+      "show": [
+        "MemberName",
+        "MemberSid",
+        "TargetUserName",
+        "SubjectUserName"
+      ]
+    },
+    {
+      "id": "rdp-logon",
+      "title": "Remote Desktop logon",
+      "level": "low",
+      "mitre": [
+        "T1021.001"
+      ],
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4624
+      ],
+      "where": [
+        [
+          "LogonType",
+          [
+            "10"
+          ]
+        ]
+      ],
+      "show": [
+        "TargetUserName",
+        "TargetDomainName",
+        "IpAddress"
+      ]
+    },
+    {
+      "id": "pass-the-hash-seclogo",
+      "title": "NewCredentials logon via seclogo (pass-the-hash pattern)",
+      "level": "high",
+      "mitre": [
+        "T1550.002"
+      ],
+      "description": "Logon type 9 through seclogo is what sekurlsa::pth produces; 'runas /netonly' does too, so confirm.",
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4624
+      ],
+      "where": [
+        [
+          "LogonType",
+          [
+            "9"
+          ]
+        ],
+        [
+          "LogonProcessName",
+          [
+            "seclogo"
+          ]
+        ]
+      ],
+      "show": [
+        "TargetUserName",
+        "SubjectUserName",
+        "TargetOutboundUserName"
+      ]
+    },
+    {
+      "id": "scheduled-task-created",
+      "title": "Scheduled task created",
+      "level": "medium",
+      "mitre": [
+        "T1053.005"
+      ],
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4698
+      ],
+      "where_not": [
+        [
+          "TaskContent|contains",
+          [
+            "powershell",
+            "cmd.exe /c",
+            "cmd /c",
+            "mshta",
+            "rundll32",
+            "regsvr32",
+            "certutil",
+            "wscript",
+            "cscript",
+            "\\appdata\\",
+            "\\temp\\",
+            "http://",
+            "https://",
+            " -enc"
+          ]
+        ]
+      ],
+      "show": [
+        "TaskName",
+        "SubjectUserName"
+      ]
+    },
+    {
+      "id": "scheduled-task-suspicious",
+      "title": "Scheduled task created with a suspicious action",
+      "level": "high",
+      "mitre": [
+        "T1053.005"
+      ],
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4698
+      ],
+      "where": [
+        [
+          "TaskContent|contains",
+          [
+            "powershell",
+            "cmd.exe /c",
+            "cmd /c",
+            "mshta",
+            "rundll32",
+            "regsvr32",
+            "certutil",
+            "wscript",
+            "cscript",
+            "\\appdata\\",
+            "\\temp\\",
+            "http://",
+            "https://",
+            " -enc"
+          ]
+        ]
+      ],
+      "show": [
+        "TaskName",
+        "SubjectUserName",
+        "TaskContent"
+      ]
+    },
+    {
+      "id": "service-installed-security",
+      "title": "Service installed (Security log)",
+      "level": "medium",
+      "mitre": [
+        "T1543.003"
+      ],
+      "channels": [
+        "Security"
+      ],
+      "event_ids": [
+        4697
+      ],
+      "show": [
+        "ServiceName",
+        "ServiceFileName",
+        "ServiceAccount",
+        "SubjectUserName"
+      ]
+    },
+    {
+      "id": "service-installed",
+      "title": "New service installed",
+      "level": "info",
+      "description": "Drivers and updaters install services all the time, so this is context, not an alert; suspicious ones are caught by service-suspicious-imagepath.",
+      "mitre": [
+        "T1543.003"
+      ],
+      "channels": [
+        "System"
+      ],
+      "event_ids": [
+        7045
+      ],
+      "where_not": [
+        [
+          "ImagePath|contains",
+          [
+            "cmd.exe",
+            "cmd /c",
+            "powershell",
+            "%comspec%",
+            "\\admin$",
+            "\\temp\\",
+            "\\appdata\\",
+            "\\users\\public\\",
+            "mshta",
+            "rundll32",
+            "regsvr32",
+            " -enc"
+          ]
+        ],
+        [
+          "ServiceName|startswith",
+          [
+            "psexesvc"
+          ]
+        ]
+      ],
+      "show": [
+        "ServiceName",
+        "ImagePath",
+        "AccountName"
+      ]
+    },
+    {
+      "id": "service-suspicious-imagepath",
+      "title": "Service installed with a suspicious command",
+      "level": "high",
+      "mitre": [
+        "T1543.003",
+        "T1569.002"
+      ],
+      "description": "Services that run a shell, a script host or a binary from a user-writable folder are a favourite persistence and lateral-movement trick.",
+      "channels": [
+        "System"
+      ],
+      "event_ids": [
+        7045
+      ],
+      "where": [
+        [
+          "ImagePath|contains",
+          [
+            "cmd.exe",
+            "cmd /c",
+            "powershell",
+            "%comspec%",
+            "\\admin$",
+            "\\temp\\",
+            "\\appdata\\",
+            "\\users\\public\\",
+            "mshta",
+            "rundll32",
+            "regsvr32",
+            " -enc"
+          ]
+        ]
+      ],
+      "show": [
+        "ServiceName",
+        "ImagePath",
+        "AccountName"
+      ]
+    },
+    {
+      "id": "psexec-service",
+      "title": "PsExec service installed (remote execution)",
+      "level": "high",
+      "mitre": [
+        "T1569.002",
+        "T1021.002"
+      ],
+      "channels": [
+        "System"
+      ],
+      "event_ids": [
+        7045
+      ],
+      "where": [
+        [
+          "ServiceName|startswith",
+          [
+            "psexesvc"
+          ]
+        ]
+      ],
+      "show": [
+        "ServiceName",
+        "ImagePath",
+        "AccountName"
+      ]
+    },
+    {
+      "id": "defender-service-disabled",
+      "title": "Microsoft Defender service start type changed to disabled",
+      "level": "high",
+      "mitre": [
+        "T1562.001"
+      ],
+      "channels": [
+        "System"
+      ],
+      "event_ids": [
+        7040
+      ],
+      "where": [
+        [
+          "param1|contains",
+          [
+            "defender"
+          ]
+        ],
+        [
+          "param3|contains",
+          [
+            "disabled"
+          ]
+        ]
+      ],
+      "show": [
+        "param1",
+        "param2",
+        "param3"
+      ]
+    },
+    {
+      "id": "lolbin-certutil-download",
+      "title": "certutil used to download or decode a file",
+      "level": "high",
+      "mitre": [
+        "T1105",
+        "T1140"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "certutil"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "urlcache",
+            "verifyctl",
+            "-decode"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "lolbin-bitsadmin-transfer",
+      "title": "bitsadmin file transfer",
+      "level": "medium",
+      "mitre": [
+        "T1197",
+        "T1105"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "bitsadmin"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "/transfer",
+            "/addfile"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "lolbin-mshta-remote",
+      "title": "mshta running remote or inline script",
+      "level": "high",
+      "mitre": [
+        "T1218.005"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "mshta"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "http:",
+            "https:",
+            "javascript:",
+            "vbscript:"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "lolbin-rundll32-script",
+      "title": "rundll32 executing script or HTML",
+      "level": "high",
+      "mitre": [
+        "T1218.011"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "rundll32"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "javascript:",
+            "url.dll,",
+            "runhtmlapplication",
+            "shell32.dll,shellexec_rundll"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "lolbin-regsvr32-scriptlet",
+      "title": "regsvr32 loading a remote scriptlet (Squiblydoo)",
+      "level": "high",
+      "mitre": [
+        "T1218.010"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "regsvr32"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "/i:http",
+            "/i:https",
+            "-i:http",
+            "scrobj"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "powershell-encoded-command",
+      "title": "PowerShell started with an encoded command",
+      "level": "medium",
+      "mitre": [
+        "T1059.001",
+        "T1027"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "powershell",
+            "pwsh"
+          ]
+        ],
+        [
+          "CommandLine|re",
+          [
+            "\\s[-/](e|ec|enc|enco|encod|encode|encoded|encodedc|encodedcommand)\\s+['\\\"]?[a-z0-9+/]{16,}={0,2}"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "inhibit-recovery",
+      "title": "Shadow copies or recovery deleted (ransomware precursor)",
+      "level": "critical",
+      "mitre": [
+        "T1490"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "vssadmin(\\.exe)?\\s+delete\\s+shadows",
+            "shadowcopy\\s+delete",
+            "wbadmin(\\.exe)?\\s+delete\\s+(catalog|systemstatebackup)",
+            "recoveryenabled\\s+no"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "net-user-add",
+      "title": "User account added from the command line",
+      "level": "high",
+      "mitre": [
+        "T1136.001"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "\\bnet1?(\\.exe)?\\s+user\\s+\\S+\\s+.*/add\\b"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "net-localgroup-admin-add",
+      "title": "Account added to local Administrators from the command line",
+      "level": "high",
+      "mitre": [
+        "T1098"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "\\bnet1?(\\.exe)?\\s+localgroup\\s+administrators\\s+.*/add\\b"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "credential-hive-save",
+      "title": "SAM or SECURITY registry hive saved to disk",
+      "level": "critical",
+      "mitre": [
+        "T1003.002"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "\\breg(\\.exe)?\\s+(save|export)\\s+(hklm|hkey_local_machine)\\\\(sam|security)\\b"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "lsass-memory-dump",
+      "title": "LSASS memory dump attempt",
+      "level": "critical",
+      "mitre": [
+        "T1003.001"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "comsvcs(\\.dll)?[, ]+#?(minidump|24)",
+            "procdump(64)?(\\.exe)?\\s.*\\blsass",
+            "-ma\\s+lsass"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "ntds-dump",
+      "title": "Active Directory database (ntds.dit) extraction",
+      "level": "critical",
+      "mitre": [
+        "T1003.003"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "ntdsutil"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "ifm",
+            "ac i ntds",
+            "activate instance ntds"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "domain-trust-discovery",
+      "title": "Domain trust discovery",
+      "level": "low",
+      "mitre": [
+        "T1482"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|contains",
+          [
+            "nltest"
+          ]
+        ],
+        [
+          "CommandLine|contains",
+          [
+            "/domain_trusts",
+            "/dclist",
+            "/all_trusts"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "defender-tamper-cmdline",
+      "title": "Defender settings weakened from the command line",
+      "level": "high",
+      "mitre": [
+        "T1562.001"
+      ],
+      "channels": [
+        "Security",
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        4688,
+        1
+      ],
+      "where": [
+        [
+          "CommandLine|re",
+          [
+            "set-mppreference\\s.*-disable(realtimemonitoring|ioavprotection|behaviormonitoring|scriptscanning)",
+            "add-mppreference\\s.*-exclusion(path|process|extension)"
+          ]
+        ]
+      ],
+      "show": [
+        "CommandLine",
+        "SubjectUserName",
+        "User"
+      ]
+    },
+    {
+      "id": "ps-download-and-execute",
+      "title": "PowerShell downloads code and executes it in memory",
+      "level": "high",
+      "mitre": [
+        "T1059.001",
+        "T1105"
+      ],
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|contains",
+          [
+            "downloadstring",
+            "downloaddata"
+          ]
+        ],
+        [
+          "ScriptBlockText|re",
+          [
+            "\\biex\\b",
+            "invoke-expression"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-reflective-assembly-load",
+      "title": "PowerShell loads a .NET assembly from a byte array",
+      "level": "high",
+      "mitre": [
+        "T1620"
+      ],
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|re",
+          [
+            "reflection\\.assembly\\]::load\\("
+          ]
+        ],
+        [
+          "ScriptBlockText|contains",
+          [
+            "frombase64string",
+            "[byte[]]"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-defender-tamper",
+      "title": "PowerShell weakens Microsoft Defender",
+      "level": "high",
+      "mitre": [
+        "T1562.001"
+      ],
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|re",
+          [
+            "set-mppreference\\s.*-disable(realtimemonitoring|ioavprotection|behaviormonitoring|scriptscanning)\\s+\\$?(true|1)",
+            "add-mppreference\\s.*-exclusion(path|process|extension)"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-amsi-tamper",
+      "title": "AMSI bypass attempt in a PowerShell script block",
+      "level": "critical",
+      "mitre": [
+        "T1562.001"
+      ],
+      "description": "The patterns are written with character classes so this rule file never contains the literal strings antivirus engines flag.",
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|re",
+          [
+            "amsi[i]nit[f]ailed",
+            "amsi[u]tils",
+            "amsi[s]can[b]uffer"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-credential-tool-commands",
+      "title": "Credential-theft tool commands in a PowerShell script block",
+      "level": "critical",
+      "mitre": [
+        "T1003"
+      ],
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|re",
+          [
+            "sekur[l]sa::",
+            "lsadu[m]p::",
+            "kerberos::gol[d]en",
+            "privilege::de[b]ug"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-encoded-execution",
+      "title": "PowerShell decodes Base64 and executes it",
+      "level": "medium",
+      "mitre": [
+        "T1027",
+        "T1059.001"
+      ],
+      "channels": [
+        "Microsoft-Windows-PowerShell/Operational"
+      ],
+      "event_ids": [
+        4104
+      ],
+      "where": [
+        [
+          "ScriptBlockText|contains",
+          [
+            "frombase64string"
+          ]
+        ],
+        [
+          "ScriptBlockText|re",
+          [
+            "\\biex\\b",
+            "invoke-expression"
+          ]
+        ]
+      ],
+      "where_not": [
+        [
+          "ScriptBlockText|contains",
+          [
+            "downloadstring",
+            "downloaddata"
+          ]
+        ]
+      ],
+      "show": [
+        "ScriptBlockText",
+        "Path"
+      ]
+    },
+    {
+      "id": "ps-classic-encoded-host",
+      "title": "PowerShell engine started with an encoded command",
+      "level": "medium",
+      "mitre": [
+        "T1059.001",
+        "T1027"
+      ],
+      "channels": [
+        "Windows PowerShell"
+      ],
+      "event_ids": [
+        400
+      ],
+      "where": [
+        [
+          "*|re",
+          [
+            "hostapplication=\\S*(powershell|pwsh)\\S*.*?\\s[-/](e|ec|enc|enco|encod|encode|encoded|encodedc|encodedcommand)\\s+['\\\"]?[a-z0-9+/]{16,}={0,2}"
+          ]
+        ]
+      ],
+      "show": [
+        {
+          "field": "Data_3",
+          "extract": "HostApplication=([^\r\n]+)",
+          "label": "HostApplication"
+        },
+        {
+          "field": "Data_3",
+          "extract": "EngineVersion=([^\r\n]+)",
+          "label": "EngineVersion"
+        }
+      ]
+    },
+    {
+      "id": "ps-version-downgrade",
+      "title": "PowerShell 2.0 engine started (logging-bypass downgrade)",
+      "level": "high",
+      "mitre": [
+        "T1562.010"
+      ],
+      "description": "PowerShell 2.0 predates script block logging and AMSI; attackers start it to run unseen.",
+      "channels": [
+        "Windows PowerShell"
+      ],
+      "event_ids": [
+        400
+      ],
+      "where": [
+        [
+          "*|re",
+          [
+            "engineversion=2\\."
+          ]
+        ]
+      ],
+      "show": [
+        {
+          "field": "Data_3",
+          "extract": "HostApplication=([^\r\n]+)",
+          "label": "HostApplication"
+        },
+        {
+          "field": "Data_3",
+          "extract": "EngineVersion=([^\r\n]+)",
+          "label": "EngineVersion"
+        }
+      ]
+    },
+    {
+      "id": "defender-malware-detected",
+      "title": "Microsoft Defender detected malware",
+      "level": "high",
+      "mitre": [],
+      "channels": [
+        "Microsoft-Windows-Windows Defender/Operational"
+      ],
+      "event_ids": [
+        1116
+      ],
+      "show": [
+        "Threat Name",
+        "Severity Name",
+        "Path",
+        "Process Name",
+        "Detection User"
+      ]
+    },
+    {
+      "id": "defender-action-taken",
+      "title": "Microsoft Defender acted on malware",
+      "level": "medium",
+      "mitre": [],
+      "channels": [
+        "Microsoft-Windows-Windows Defender/Operational"
+      ],
+      "event_ids": [
+        1117
+      ],
+      "show": [
+        "Threat Name",
+        "Action Name",
+        "Path"
+      ]
+    },
+    {
+      "id": "defender-realtime-disabled",
+      "title": "Microsoft Defender real-time protection disabled",
+      "level": "high",
+      "mitre": [
+        "T1562.001"
+      ],
+      "channels": [
+        "Microsoft-Windows-Windows Defender/Operational"
+      ],
+      "event_ids": [
+        5001
+      ],
+      "show": [
+        "Product Name"
+      ]
+    },
+    {
+      "id": "defender-exclusion-added",
+      "title": "Microsoft Defender exclusion added",
+      "level": "medium",
+      "mitre": [
+        "T1562.001"
+      ],
+      "description": "Exclusions are a common way for malware to hide from scanning; admins add them too, so review each one.",
+      "channels": [
+        "Microsoft-Windows-Windows Defender/Operational"
+      ],
+      "event_ids": [
+        5007
+      ],
+      "where": [
+        [
+          "New Value|contains",
+          [
+            "\\exclusions\\"
+          ]
+        ]
+      ],
+      "show": [
+        "New Value"
+      ]
+    },
+    {
+      "id": "lsass-handle-access",
+      "title": "Process opened LSASS with credential-dumping access rights",
+      "level": "critical",
+      "mitre": [
+        "T1003.001"
+      ],
+      "channels": [
+        "Microsoft-Windows-Sysmon/Operational"
+      ],
+      "event_ids": [
+        10
+      ],
+      "where": [
+        [
+          "TargetImage|endswith",
+          [
+            "\\lsass.exe"
+          ]
+        ],
+        [
+          "GrantedAccess",
+          [
+            "0x1010",
+            "0x1410",
+            "0x1438",
+            "0x143a",
+            "0x1fffff"
+          ]
+        ]
+      ],
+      "where_not": [
+        [
+          "SourceImage|endswith",
+          [
+            "\\msmpeng.exe",
+            "\\csrss.exe",
+            "\\wininit.exe",
+            "\\mrt.exe",
+            "\\wmiprvse.exe"
+          ]
+        ]
+      ],
+      "show": [
+        "SourceImage",
+        "GrantedAccess",
+        "SourceUser"
+      ]
+    }
+  ]
+}

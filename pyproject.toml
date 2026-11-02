@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evtx-hunter"
+dynamic = ["version"]
+description = "Hunt for attackers in Windows .evtx logs: a from-scratch parser verified against Windows itself, ATT&CK-mapped rules, multi-event correlation and log-tampering detection. Zero dependencies."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "kira", email = "286490266+njuj@users.noreply.github.com" }]
+keywords = ["dfir", "evtx", "windows", "event-log", "threat-hunting", "incident-response", "mitre-attack", "blue-team", "forensics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://github.com/njuj/evtx-hunter"
+
+[project.scripts]
+evtx-hunter = "evtxhunter.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "evtxhunter.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["evtxhunter*"]
+
+[tool.setuptools.package-data]
+evtxhunter = ["rules/*.json"]
