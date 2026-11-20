@@ -96,6 +96,42 @@ class CLITest(unittest.TestCase):
         rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
         self.assertTrue(any(r["rule_id"] == "inhibit-recovery" and r["mitre"] == "T1490" for r in rows))
 
+    def test_sigma_rules_run_on_security_4688(self):
+        rule = Path(self.dir.parent, "sigma-cli-test")
+        rule.mkdir(exist_ok=True)
+        (rule / "certutil.yml").write_text("""title: Certutil Download From A URL
+id: 9b1c2a3d-0000-4000-8000-00000000c3c7
+tags:
+    - attack.t1105
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\\certutil.exe'
+        CommandLine|contains|windash: '-urlcache'
+    condition: selection
+level: high
+""", encoding="utf-8")
+        (rule / "count.yml").write_text("title: c\nlogsource:\n    product: windows\n    service: security\n"
+                                        "detection:\n    s:\n        EventID: 4625\n    condition: s | count() > 5\n",
+                                        encoding="utf-8")
+        try:
+            out, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                code = cli.main([str(self.dir), "--json", "--no-builtin", "--sigma", str(rule)])
+        finally:
+            shutil.rmtree(rule, ignore_errors=True)
+        self.assertEqual(code, 1)
+        self.assertIn("1 rules loaded from 2 files (1 skipped: aggregation", err.getvalue())
+        hits = [f for f in json.loads(out.getvalue())["findings"] if f["rule_id"].startswith("sigma:")]
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["mitre"], ["T1105"])
+        self.assertIn("certutil.exe -urlcache", json.dumps(hits[0]))
+        code, _, err = self.run_cli(self.dir, "--sigma", self.dir / "no-such-rules")
+        self.assertEqual(code, 2)
+        self.assertIn("no such Sigma rule", err)
+
     def test_fail_on_and_errors(self):
         self.assertEqual(self.run_cli(self.dir, "--json", "--fail-on", "critical")[0], 1)
         self.assertEqual(self.run_cli(self.dir / "nope")[0], 2)

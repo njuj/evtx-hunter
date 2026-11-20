@@ -15,6 +15,7 @@ from . import __version__
 from .correlate import Settings
 from .hunter import LogStats, hunt
 from .rules import LEVELS, RuleError, load_builtin, load_path, rank
+from . import sigma
 
 COLORS = {"critical": "1;31", "high": "31", "medium": "33", "low": "36", "info": "2"}
 UNICODE = {"critical": "✖", "high": "✖", "medium": "⚠", "low": "•", "info": "·", "sep": "·", "fix": "└",
@@ -32,6 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("-r", "--recursive", action="store_true", help="search directories recursively")
     ap.add_argument("--rules", action="append", type=Path, default=[], metavar="PATH",
                     help="extra rule file or directory of *.json rules (repeatable)")
+    ap.add_argument("--sigma", action="append", type=Path, default=[], metavar="PATH",
+                    help="Sigma rule file or directory of *.yml rules, e.g. SigmaHQ's rules/windows (repeatable)")
     ap.add_argument("--no-builtin", action="store_true", help="skip the built-in rules")
     ap.add_argument("--min-level", choices=LEVELS, default="low", help="hide findings below this (default: low)")
     ap.add_argument("--fail-on", choices=LEVELS, default="high",
@@ -174,6 +177,15 @@ def main(argv: list[str] | None = None) -> int:
         rules = [] if args.no_builtin else load_builtin()
         for p in args.rules:
             rules += load_path(p)
+        for p in args.sigma:
+            if not p.exists():
+                raise OSError(f"no such Sigma rule file or directory: {p}")
+            loaded = sigma.load(p)
+            rules += loaded.rules
+            skipped = sum(loaded.skipped.values())
+            why = ", ".join(f"{k} {v}" for k, v in sorted(loaded.skipped.items(), key=lambda kv: -kv[1])[:4])
+            print(f"evtx-hunter: Sigma {p.name}: {len(loaded.rules):,} rules loaded from {loaded.files:,} files"
+                  + (f" ({skipped} skipped: {why})" if skipped else ""), file=sys.stderr)
     except (RuleError, ValueError, OSError) as e:
         print(f"evtx-hunter: {e}", file=sys.stderr)
         return 2

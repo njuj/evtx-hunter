@@ -1,6 +1,6 @@
 # evtx-hunter
 
-**Hunt for attackers in Windows event logs.** A `.evtx` parser written from scratch and verified field-for-field against Windows' own decoder, 40 ATT&CK-mapped rules, 5 multi-event correlations, and log-tampering forensics that **recovers records an attacker hid from Windows**. Pure Python standard library: zero dependencies.
+**Hunt for attackers in Windows event logs.** A `.evtx` parser written from scratch and verified field-for-field against Windows' own decoder, 40 ATT&CK-mapped rules, 5 multi-event correlations, a **Sigma engine that runs SigmaHQ's Windows rules** (2,382 of 2,427 load, 444 of 446 regression logs exact), and log-tampering forensics that **recovers records an attacker hid from Windows**. Pure Python standard library: zero dependencies.
 
 [![ci](https://github.com/njuj/evtx-hunter/actions/workflows/ci.yml/badge.svg)](https://github.com/njuj/evtx-hunter/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.10%2B-00ff9c?labelColor=0b0f17)
@@ -15,7 +15,7 @@
 ```text
 $ evtx-hunter examples/demo
 
- evtx-hunter v0.1.0  ·  3 log(s)  ·  50 events  ·  2026-10-30 → 2026-10-30  ·  0.0s
+ evtx-hunter v0.2.0  ·  3 log(s)  ·  50 events  ·  2026-10-30 → 2026-10-30  ·  0.0s
 
  LOGS
    PowerShell-Operational.evtx         2 events  ✔ intact
@@ -123,11 +123,29 @@ evtx-hunter logs/ --min-level high            # hide low / medium
 evtx-hunter logs/ --json > findings.json      # for a SIEM or a notebook
 evtx-hunter logs/ --csv timeline.csv          # for the case file
 evtx-hunter logs/ --rules my-rules/           # add your own detections
+evtx-hunter logs/ --sigma sigma/rules/windows # run SigmaHQ's rules as well
 ```
 
 **Exit codes:** `0` nothing at/above `--fail-on` (default `high`) · `1` findings · `2` error
 
 Getting logs: `wevtutil epl Security C:\cases\Security.evtx` (needs admin for Security), or copy `C:\Windows\System32\winevt\Logs\*.evtx` from a mounted image. Never commit real logs: they contain host names, accounts and addresses (this repo's `.gitignore` refuses `*.evtx` outside the demo).
+
+## Sigma rules
+
+`--sigma` takes a Sigma rule file or a whole folder (repeatable), for example a clone of [SigmaHQ](https://github.com/SigmaHQ/sigma):
+
+```text
+$ evtx-hunter logs/ --sigma sigma/rules/windows
+evtx-hunter: Sigma windows: 2,382 rules loaded from 2,427 files (45 skipped: logsource service not mapped 27, logsource category not mapped 18)
+```
+
+The engine is written for this tool, still with no dependencies: a YAML reader for the subset Sigma uses, the full condition grammar (`and` / `or` / `not`, parentheses, `1 of sel_*`, `all of them`), and the value modifiers `contains`, `startswith`, `endswith`, `all`, `re` (with `i` / `m` / `s`), `cased`, `windash`, `base64`, `base64offset`, `utf16le` / `utf16be` / `wide`, `cidr`, `exists`, `fieldref`, `lt` / `lte` / `gt` / `gte`, plus `null` values and keyword lists.
+
+`process_creation` rules run on **Sysmon event 1 and on Security event 4688**, with the fields translated (`Image` → `NewProcessName`, `ParentImage` → `ParentProcessName`, `User` → `SubjectUserName`, …). A host with command-line auditing but no Sysmon still gets the process rules. The other Sysmon categories, PowerShell, services, Defender, WMI and the built-in channels are mapped to their channel and event id.
+
+**Checked against SigmaHQ itself** (rules and `regression_data` at commit `698f091`): SigmaHQ ships a real `.evtx` for 446 of its Windows rules that load here, with the number of events each one must match. evtx-hunter gets **444 exact**. The other two (`dtrace` kernel dump, GitHub self-hosted runner) match 2 events where SigmaHQ expects 1. Each of those logs contains two process starts that both satisfy the rule, so the expected count there is the one that is off.
+
+What is skipped is never half-run: aggregations (`| count()`), `near`, unknown modifiers and logsources that are not Windows event logs are counted and reported at load time, not silently ignored. Loading the 2,427 rules takes about 3.5 seconds.
 
 ## Writing rules
 
@@ -160,6 +178,7 @@ Rules for AMSI-bypass and credential-tool strings are written with character cla
 evtxhunter/
 ├── evtx.py        file/chunk/record reader, Binary XML + templates, value rendering, slack-space recovery
 ├── rules.py       rule engine, validation, inline PowerShell decoding
+├── sigma.py       Sigma YAML reader, condition grammar, modifiers, logsource and 4688 field mapping
 ├── correlate.py   brute force, spraying, Kerberoasting, new-admin
 ├── hunter.py      orchestration, record-gap and checksum forensics, folding repeats
 ├── cli.py         timeline renderer, JSON/CSV, exit codes
@@ -168,7 +187,7 @@ tests/
 ├── evtxwriter.py      writes real .evtx (templates, hashes, CRCs, eventlogedit-style hiding)
 ├── wevtutil_diff.py   field-by-field comparison with Windows' decoder
 ├── demo_story.py      the fictional intrusion in examples/demo
-└── test_*.py          39 tests
+└── test_*.py          50 tests
 ```
 
 ```bash
@@ -180,7 +199,7 @@ EVTXHUNTER_DIFF=1 python -m unittest discover -s tests -v   # + slow differentia
 
 - **Hayabusa** and **Chainsaw** (Rust) are faster and ship thousands of Sigma rules; use them in production. evtx-hunter's value is different: a dependency-free parser you can read in an afternoon, proven against Windows field by field, with hidden-record recovery built into the same pass instead of left to a separate carving tool such as EVTXtract.
 - About **6,000 events/second**, single-threaded: fine for a host, slow for a fleet.
-- Rules are Sigma-*flavoured* JSON, not Sigma YAML (the standard library has no YAML parser).
+- Sigma aggregations (`count()`, `near`) and the `expand` placeholders are not supported; those rules are skipped and counted. The YAML reader covers what Sigma rules use, not all of YAML.
 - Correlations need the right audit policy: 4625 (failed logons), 4769 (Kerberos service tickets) and 4688 with command-line logging are off by default on many systems.
 - Only `.evtx` files. Live channels, `.evt` (XP era) and ETW are out of scope.
 
