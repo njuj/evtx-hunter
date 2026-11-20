@@ -8,6 +8,8 @@
 ![parity](https://img.shields.io/badge/parity_with_Windows-1%2C251%2C847_fields%2C_0_diffs-00ff9c?labelColor=0b0f17)
 ![license](https://img.shields.io/badge/license-MIT-00ff9c?labelColor=0b0f17)
 
+<p align="center"><img src="docs/banner.svg" width="100%" alt="evtx-hunter: how it works"/></p>
+
 <p align="center"><img src="docs/demo.svg" width="100%" alt="evtx-hunter running in a terminal"/></p>
 
 ```text
