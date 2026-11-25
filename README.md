@@ -1,6 +1,6 @@
 # evtx-hunter
 
-[![Part of Cryptid Security](https://img.shields.io/badge/part_of-Cryptid%20Security-00ff9c?style=flat-square&labelColor=0d1117)](https://github.com/cryptid-security)
+[![Part of Cryptid Security](https://img.shields.io/badge/part_of-Cryptid%20Security-c6922f?style=flat-square&labelColor=0c1411)](https://github.com/cryptid-security)
 
 **Hunt for attackers in Windows event logs.** A `.evtx` parser written from scratch and verified field-for-field against Windows' own decoder, 40 ATT&CK-mapped rules, 5 multi-event correlations, a **Sigma engine that runs SigmaHQ's Windows rules** (2,382 of 2,427 load, 444 of 446 regression logs exact), and log-tampering forensics that **recovers records an attacker hid from Windows**. Pure Python standard library: zero dependencies.
 
